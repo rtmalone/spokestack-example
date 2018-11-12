@@ -7,17 +7,11 @@
  */
 
 import React, { Component } from "react";
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-  Button
-} from "react-native";
+import { Platform, StyleSheet, Text, View, Button } from "react-native";
+import GoogleKey from "./google-key.json";
 
-const RNSpokestack = Platform.select({
-  android: () => require("react-native-spokestack")
+const Spokestack = Platform.select({
+  android: require("react-native-spokestack")
 });
 
 const instructions = Platform.select({
@@ -38,20 +32,18 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    if (RNSpokestack) {
-      RNSpokestack.initialize({
+    if (Spokestack && Platform.OS === "android") {
+      Spokestack.initialize({
         input: "com.pylon.spokestack.android.MicrophoneInput",
         stages: [
           "com.pylon.spokestack.libfvad.VADTrigger",
           "com.pylon.spokestack.google.GoogleSpeechRecognizer"
-          // 'com.pylon.spokestack.microsoft.BingSpeechRecognizer'
         ],
         properties: {
           "vad-mode": "aggressive",
           "vad-rise-delay": 30,
           "vad-fall-delay": 40,
           "google-credentials": JSON.stringify(GoogleKey),
-          // 'bing-speech-api-key': Config.BING_VOICE_CREDENTIALS,
           locale: "en-US",
           "sample-rate": 16000,
           "frame-width": 20,
@@ -59,13 +51,13 @@ export default class App extends Component {
         }
       });
       const logEvent = e => console.log(e);
-      RNSpokestack.onSpeechStarted = logEvent;
-      RNSpokestack.onSpeechEnded = logEvent;
-      RNSpokestack.onSpeechError = e => {
-        RNSpokestack.stop();
+      Spokestack.onSpeechStarted = logEvent;
+      Spokestack.onSpeechEnded = logEvent;
+      Spokestack.onSpeechError = e => {
+        Spokestack.stop();
         logEvent(e);
       };
-      RNSpokestack.onSpeechRecognized = this.speechDetected;
+      Spokestack.onSpeechRecognized = this.speechDetected;
     }
   }
 
@@ -87,10 +79,10 @@ export default class App extends Component {
           style={styles.button}
           onPress={async () => {
             if (recording) {
-              RNSpokestack.stop();
+              Spokestack.stop();
               this.setState({ recording: false });
-            } else if (await requestMicrophone()) {
-              this.setState({ recording: true }, RNSpokestack.start);
+            } else if (!recording && Platform.OS === "android") {
+              this.setState({ recording: true }, Spokestack.start);
             } else {
               const message =
                 Platform.OS !== "android"
