@@ -8,6 +8,7 @@
 
 import React, { Component } from "react";
 import { Platform, StyleSheet, Text, View, Button } from "react-native";
+import { requestMicrophone } from "./utils/permission";
 import GoogleKey from "./google-key.json";
 
 const Spokestack = Platform.select({
@@ -81,7 +82,7 @@ export default class App extends Component {
             if (recording) {
               Spokestack.stop();
               this.setState({ recording: false });
-            } else if (!recording && Platform.OS === "android") {
+            } else if (await requestMicrophone()) {
               this.setState({ recording: true }, Spokestack.start);
             } else {
               const message =
